@@ -4,6 +4,7 @@ using namespace std;
 struct Estado {
     string nome; // nome do estado na tabela tipo s ou a
     bool final = false; // se eh final equivale ao * da tabel
+    set<string> tokens; // qual palavra reconhece no final
     map<char, set<int>> transicoes; // setas q saem do estado
 };
 
@@ -49,16 +50,45 @@ int novoEstado() {
     return posicao;
 }
 
+void criaSeta(int origem, char letra, int destino) {
+    if (alfabeto.find(letra) == string:: npos) { // procura a letra se n cria nova
+        alfabeto = alfabeto + letra;
+    }
+    afnd[origem].transicoes[letra].insert(destino);
+}
+
+void adicionarToken(string token) {
+    int atual = 0;
+    for (char letra : token) {
+        int novo = novoEstado();
+        criaSeta(atual, letra, novo);
+        atual = novo;
+    }
+    afnd[atual].final = true;
+    afnd[atual].tokens.insert(token);
+}
+
 int main() {
     Estado inicial;
     inicial.nome = "S";
     afnd.push_back(inicial);
-    for (int i = 0; i < 30; i++) {
-        novoEstado();
-    }
+    adicionarToken("se");
+    adicionarToken("senao");
+    cout << "alfabeto: " << alfabeto << "\n";
     for (Estado e : afnd) {
-        cout << e.nome << " ";
+        for (char letra : alfabeto) {
+            if (e.transicoes.count(letra) > 0) {
+                for (int destino : e.transicoes[letra]) {
+                    cout << e.nome << " --" << letra << "--> " << afnd[destino].nome << "\n";
+                }
+            }
+        }
+        if (e.final) {
+            for (string token : e.tokens) {
+                cout << e.nome << " eh final e reconhece " << token << "\n";
+            }
+        }
     }
-    cout << "\n";
+
     return 0;
 }
