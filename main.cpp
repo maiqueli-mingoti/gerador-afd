@@ -68,6 +68,89 @@ void adicionarToken(string token) {
     afnd[atual].tokens.insert(token);
 }
 
+
+map<string, int> mapaGR;
+
+// funcao pra achar o numero do estado da gramatica
+int pegarEstadoGR(string nomeGR) {
+    if (nomeGR == "<S>") {
+        return 0; // O S eh sempre o inicial q ta na posicao 0
+    }
+    // se nao existe ainda, cria um novo
+    if (mapaGR.count(nomeGR) == 0) {
+        mapaGR[nomeGR] = novoEstado();
+    }
+    return mapaGR[nomeGR];
+}
+
+// funcao pra processar a gramatica
+void processarGramatica(string linha) {
+    // tira todos os espacos 
+    string linhaLimpa = "";
+    for (int i = 0; i < linha.length(); i++) {
+        if (linha[i] != ' ') {
+            linhaLimpa += linha[i];
+        }
+    }
+
+    // acha onde ta o "::=" e separa os lados
+    int pos = linhaLimpa.find("::=");
+    if (pos == -1) return; // se nao achou, ignora a linha
+
+    string origem = linhaLimpa.substr(0, pos); // pega tudo antes do ::=
+    string regras = linhaLimpa.substr(pos + 3); // pega tudo depois do ::=
+
+    // vai ler letra por letra pra separar nos '|'
+    string pedaco = "";
+    for (int i = 0; i < regras.length(); i++) {
+        if (regras[i] == '|') {
+            // achou o pipe, entao o "pedaco" ta pronto pra virar seta
+            if (pedaco == "\\epsilon") {
+                int idOrigem = pegarEstadoGR(origem);
+                afnd[idOrigem].final = true;
+            } else {
+                int idOrigem = pegarEstadoGR(origem);
+                char letra = pedaco[0]; // a primeira coisa eh a letra
+                string nomeDestino = pedaco.substr(1); // o resto 
+                
+                int idDestino;
+                if (nomeDestino == "") { // se a regra for so uma letra tipo "a"
+                    idDestino = novoEstado();
+                    afnd[idDestino].final = true;
+                } else {
+                    idDestino = pegarEstadoGR(nomeDestino);
+                }
+                criaSeta(idOrigem, letra, idDestino);
+            }
+            pedaco = ""; // zera o pedaco pra ler o proximo
+        } else {
+            pedaco += regras[i]; // vai juntando as letras
+        }
+    }
+
+    // salva o ultimo pedaco que sobrou depois do ultimo '|'
+    if (pedaco != "") {
+        if (pedaco == "\\epsilon") {
+            int idOrigem = pegarEstadoGR(origem);
+            afnd[idOrigem].final = true;
+        } else {
+            int idOrigem = pegarEstadoGR(origem);
+            char letra = pedaco[0];
+            string nomeDestino = pedaco.substr(1);
+            
+            int idDestino;
+            if (nomeDestino == "") {
+                idDestino = novoEstado();
+                afnd[idDestino].final = true;
+            } else {
+                idDestino = pegarEstadoGR(nomeDestino);
+            }
+            criaSeta(idOrigem, letra, idDestino);
+        }
+    }
+}
+
+
 int main() {
     Estado inicial;
     inicial.nome = "S";
