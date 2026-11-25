@@ -83,6 +83,22 @@ int pegarEstadoGR(string nomeGR) {
     return mapaGR[nomeGR];
 }
 
+// pensei q talvez precisaria disso pra verificar o vazio escrito de diferentes formas
+bool ehEpsilon(string pedaco) {
+    if (pedaco == "ε") {
+        return true;
+    }
+
+    if (pedaco == "\\epsilon") {
+        return true;
+    }
+
+    if (pedaco == "&") {
+        return true;
+    }
+
+    return false;
+}
 // funcao pra processar a gramatica
 void processarGramatica(string linha) {
     // tira todos os espacos 
@@ -105,7 +121,7 @@ void processarGramatica(string linha) {
     for (int i = 0; i < regras.length(); i++) {
         if (regras[i] == '|') {
             // achou o pipe, entao o "pedaco" ta pronto pra virar seta
-            if (pedaco == "\\epsilon") {
+            if (ehEpsilon(pedaco)) {
                 int idOrigem = pegarEstadoGR(origem);
                 afnd[idOrigem].final = true;
             } else {
@@ -130,7 +146,7 @@ void processarGramatica(string linha) {
 
     // salva o ultimo pedaco que sobrou depois do ultimo '|'
     if (pedaco != "") {
-        if (pedaco == "\\epsilon") {
+        if (ehEpsilon(pedaco)) {
             int idOrigem = pegarEstadoGR(origem);
             afnd[idOrigem].final = true;
         } else {
