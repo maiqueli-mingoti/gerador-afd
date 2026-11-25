@@ -239,6 +239,75 @@ void lerArquivo() {
     arquivo.close();
 }
 
+void determinizar() {
+    // guarda o conjunto de estados do AFND que forma cada estado do AFD
+    vector<set<int>> conjuntos;
+
+    // comeca com o conjunto {0} S
+    set<int> inicial;
+    inicial.insert(0);
+    conjuntos.push_back(inicial);
+
+    EstadoAFD eInicial;
+    eInicial.nome = gerarNomeAFD(0);
+    if (afnd[0].final) {
+        eInicial.final = true;
+        eInicial.tokens = afnd[0].tokens;
+    }
+    afd.push_back(eInicial);
+
+    // conforme novos conjuntos entram no vector o for continua ate acabar
+    for (int i = 0; i < conjuntos.size(); i++) {
+        for (char letra : alfabeto) {
+            set<int> destino;
+
+            // junta todos os destinos possiveis para essa letra
+            for (int idAFND : conjuntos[i]) {
+                if (afnd[idAFND].transicoes.count(letra) > 0) {
+                    for (int d : afnd[idAFND].transicoes[letra]) {
+                        destino.insert(d);
+                    }
+                }
+            }
+
+            if (destino.size() > 0) {
+                // verifica se esse conjunto ja foi criado antes
+                int idDestino = -1;
+                for (int j = 0; j < conjuntos.size(); j++) {
+                    if (conjuntos[j] == destino) {
+                        idDestino = j;
+                        break;
+                    }
+                }
+
+                // se for conjunto novo cria um estado novo no AFD
+                if (idDestino == -1) {
+                    idDestino = conjuntos.size();
+                    conjuntos.push_back(destino);
+
+                    EstadoAFD novo;
+                    novo.nome = gerarNomeAFD(idDestino);
+
+                    for (int idAFND : destino) {
+                        if (afnd[idAFND].final) {
+                            novo.final = true;
+                            for (string tok : afnd[idAFND].tokens) {
+                                novo.tokens.insert(tok);
+                            }
+                        }
+                    }
+
+                    afd.push_back(novo);
+                }
+
+                afd[i].transicoes[letra] = idDestino;
+            }
+        }
+    }
+}
+
+
+
 
 
 int main() {
