@@ -150,6 +150,37 @@ void processarGramatica(string linha) {
     }
 }
 
+// estrutura do AFD cada letra leva para apenas 1 estado
+struct EstadoAFD {
+    string nome;
+    bool final = false;
+    set<string> tokens;
+    map<char, int> transicoes;
+};
+
+vector<EstadoAFD> afd;
+
+// gera nomes para os estados do AFD
+string gerarNomeAFD(int num) {
+    if (num == 0) {
+        return "S";
+    }
+    if (num >= 19) {
+        num++;
+    }
+
+    string nome = "";
+    int i = num;
+    while (i > 0) {
+        int resto = (i - 1) % 26;
+        char letra = 'A' + resto;
+        nome = letra + nome;
+        i = (i - 1) / 26;
+    }
+    return nome;
+}
+
+
 
 int main() {
     Estado inicial;
