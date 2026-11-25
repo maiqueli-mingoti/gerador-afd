@@ -306,8 +306,102 @@ void determinizar() {
     }
 }
 
+// funcao auxiliar pra manter no AFD apenas os estados com manter[i] == true
+void reconstruirAFD(vector<bool> manter) {
+    vector<int> novoIndice(afd.size(), -1);
+    vector<EstadoAFD> novoAFD;
 
+    // copia os estados que ficam e anota a nova posicao de cada um
+    for (int i = 0; i < afd.size(); i++) {
+        if (manter[i]) {
+            novoIndice[i] = novoAFD.size();
+            EstadoAFD copia;
+            copia.nome = gerarNomeAFD(novoIndice[i]);
+            copia.final = afd[i].final;
+            copia.tokens = afd[i].tokens;
+            novoAFD.push_back(copia);
+        }
+    }
 
+    // refaz as transicoes apontando para as novas posicoes
+    for (int i = 0; i < afd.size(); i++) {
+        if (novoIndice[i] == -1) continue;
+
+        int origemNova = novoIndice[i];
+        for (char letra : alfabeto) {
+            if (afd[i].transicoes.count(letra) > 0) {
+                int destAntigo = afd[i].transicoes[letra];
+                if (novoIndice[destAntigo] != -1) {
+                    novoAFD[origemNova].transicoes[letra] = novoIndice[destAntigo];
+                }
+            }
+        }
+    }
+
+    afd = novoAFD;
+}
+
+void removerInalcancaveis() {
+    if (afd.size() == 0) return;
+
+    vector<bool> alcancavel(afd.size(), false);
+    alcancavel[0] = true; // o estado inicial S sempre eh alcancavel
+
+    bool mudou = true;
+    while (mudou) {
+        mudou = false;
+        for (int i = 0; i < afd.size(); i++) {
+            if (alcancavel[i]) {
+                for (char letra : alfabeto) {
+                    if (afd[i].transicoes.count(letra) > 0) {
+                        int dest = afd[i].transicoes[letra];
+                        if (!alcancavel[dest]) {
+                            alcancavel[dest] = true;
+                            mudou = true;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    reconstruirAFD(alcancavel);
+}
+
+void removerMortos() {
+    if (afd.size() == 0) return;
+
+    vector<bool> vivo(afd.size(), false);
+
+    // todo estado final ja eh vivo
+    for (int i = 0; i < afd.size(); i++) {
+        if (afd[i].final) {
+            vivo[i] = true;
+        }
+    }
+
+    // se um estado leva pra um estado vivo ele tambem eh vivo
+    bool mudou = true;
+    while (mudou) {
+        mudou = false;
+        for (int i = 0; i < afd.size(); i++) {
+            if (!vivo[i]) {
+                for (char letra : alfabeto) {
+                    if (afd[i].transicoes.count(letra) > 0) {
+                        int dest = afd[i].transicoes[letra];
+                        if (vivo[dest]) {
+                            vivo[i] = true;
+                            mudou = true;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    vivo[0] = true; // mantem o inicial
+    reconstruirAFD(vivo);
+}
 
 
 int main() {
