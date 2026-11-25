@@ -454,7 +454,7 @@ void removerMortos() {
 
 void adicionarEstadoErro() {
     EstadoAFD erro;
-    erro.nome = "ERR";
+    erro.nome = "E0"; // estado de erro
     erro.final = true; // ultimo estado final 
     erro.tokens.insert("ERRO");
 
