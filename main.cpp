@@ -464,8 +464,8 @@ int main() {
     Estado inicial;
     inicial.nome = "S";
     afnd.push_back(inicial);
-    adicionarToken("se");
-    adicionarToken("senao");
+
+    lerArquivo();
     cout << "alfabeto: " << alfabeto << "\n";
     for (Estado e : afnd) {
         for (char letra : alfabeto) {
