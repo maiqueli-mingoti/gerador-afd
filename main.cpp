@@ -71,12 +71,15 @@ void adicionarToken(string token) {
 
 map<string, int> mapaGR;
 
+string simboloInicial = "<S>"; // inicial
+bool inicialReferenciado = false;
+int contadorGR = 0;
+
 // funcao pra achar o numero do estado da gramatica
 int pegarEstadoGR(string nomeGR) {
-    if (nomeGR == "<S>") {
-        return 0; // O S eh sempre o inicial q ta na posicao 0
+    if (nomeGR == simboloInicial && !inicialReferenciado) {
+        return 0;
     }
-    // se nao existe ainda, cria um novo
     if (mapaGR.count(nomeGR) == 0) {
         mapaGR[nomeGR] = novoEstado();
     }
@@ -196,6 +199,46 @@ string gerarNomeAFD(int num) {
     return nome;
 }
 
+// processa uma gramatica inteira de uma vez
+void processarBlocoGR(vector<string> linhas) {
+    mapaGR.clear();
+    contadorGR++;
+    string primeira = linhas[0];
+    simboloInicial = primeira.substr(0, primeira.find("::="));
+    inicialReferenciado = false;
+    for (int i = 0; i < linhas.size(); i++) {
+        string direita = linhas[i].substr(linhas[i].find("::=") + 3);
+        if (direita.find(simboloInicial) != string::npos) {
+            inicialReferenciado = true;
+        }
+    }
+
+    for (int i = 0; i < linhas.size(); i++) {
+        processarGramatica(linhas[i]);
+    }
+    if (inicialReferenciado) {
+        int proprio = mapaGR[simboloInicial];
+
+        for (char letra : alfabeto) {
+            if (afnd[proprio].transicoes.count(letra) > 0) {
+                for (int destino : afnd[proprio].transicoes[letra]) {
+                    criaSeta(0, letra, destino);
+                }
+            }
+        }
+
+        // se o inicial eh final o s tb fica final
+        if (afnd[proprio].final) {
+            afnd[0].final = true;
+        }
+    }
+    for (int i = 0; i < afnd.size(); i++) {
+        if (afnd[i].final && afnd[i].tokens.size() == 0) {
+            afnd[i].tokens.insert("GR" + to_string(contadorGR));
+        }
+    }
+}
+
 void lerArquivo() {
     ifstream arquivo("entrada.txt");
 
@@ -206,19 +249,14 @@ void lerArquivo() {
     }
 
     string linha;
-    bool lendoGR = false;
-    int numGR = 0;
-
+    vector<string> blocoGR;
     while (getline(arquivo, linha)) {
-        // tira \r e \t antes de passar para processarGramatica
         string semLixo = "";
         for (int i = 0; i < linha.length(); i++) {
             if (linha[i] != '\r' && linha[i] != '\t') {
                 semLixo += linha[i];
             }
         }
-
-        // tira espacos tambem pra checar se a linha esta vazia ou se eh token
         string semEspaco = "";
         for (int i = 0; i < semLixo.length(); i++) {
             if (semLixo[i] != ' ') {
@@ -226,41 +264,30 @@ void lerArquivo() {
             }
         }
 
-        // linha vazia separa uma gramatica da outra
-        if (semEspaco == "") {
-            mapaGR.clear();
-            lendoGR = false;
-            continue;
-        }
-
         int pos = semEspaco.find("::=");
         if (pos != -1) {
             string origem = semEspaco.substr(0, pos);
-
-            // se comecou uma nova GR, limpa o mapaGR pra nao misturar estados
-            if (!lendoGR || origem == "<S>") {
-                mapaGR.clear();
-                numGR++;
-                lendoGR = true;
+            if (origem == "<S>" && blocoGR.size() > 0) {
+                processarBlocoGR(blocoGR);
+                blocoGR.clear();
             }
-            processarGramatica(semLixo);
-
-            // da um nome de token pros estados finais vindos da gramatica
-            for (int i = 0; i < afnd.size(); i++) {
-                if (afnd[i].final && afnd[i].tokens.size() == 0) {
-                    afnd[i].tokens.insert("GR" + to_string(numGR));
-                }
-            }
+            blocoGR.push_back(semEspaco);
         } else {
-            mapaGR.clear();
-            lendoGR = false;
-            adicionarToken(semEspaco);
+            if (blocoGR.size() > 0) {
+                processarBlocoGR(blocoGR);
+                blocoGR.clear();
+            }
+            if (semEspaco != "") {
+                adicionarToken(semEspaco);
+            }
         }
+    }
+    if (blocoGR.size() > 0) {
+        processarBlocoGR(blocoGR);
     }
 
     arquivo.close();
 }
-
 void determinizar() {
     // guarda o conjunto de estados do AFND que forma cada estado do AFD
     vector<set<int>> conjuntos;
