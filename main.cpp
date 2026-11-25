@@ -403,6 +403,62 @@ void removerMortos() {
     reconstruirAFD(vivo);
 }
 
+void adicionarEstadoErro() {
+    EstadoAFD erro;
+    erro.nome = "ERR";
+    erro.final = true; // ultimo estado final 
+    erro.tokens.insert("ERRO");
+
+    afd.push_back(erro);
+    int idErro = afd.size() - 1;
+
+    // preenche todas as celulas vazias 
+    for (int i = 0; i < afd.size(); i++) {
+        for (char letra : alfabeto) {
+            if (afd[i].transicoes.count(letra) == 0) {
+                afd[i].transicoes[letra] = idErro;
+            }
+        }
+    }
+}
+
+void imprimirAFD() {
+    cout << "\nTabela do AFD final:\n\n";
+
+    cout << "Estado\t";
+    for (char letra : alfabeto) {
+        cout << letra << "\t";
+    }
+    cout << "\n";
+
+    for (int i = 0; i < afd.size(); i++) {
+        if (afd[i].final) {
+            cout << "*";
+        }
+        cout << afd[i].nome << "\t";
+
+        for (char letra : alfabeto) {
+            if (afd[i].transicoes.count(letra) > 0) {
+                int dest = afd[i].transicoes[letra];
+                cout << afd[dest].nome << "\t";
+            } else {
+                cout << "-\t";
+            }
+        }
+        cout << "\n";
+    }
+
+    cout << "\nEstados finais do AFD:\n";
+    for (int i = 0; i < afd.size(); i++) {
+        if (afd[i].final) {
+            cout << afd[i].nome << ": ";
+            for (string tok : afd[i].tokens) {
+                cout << tok << " ";
+            }
+            cout << "\n";
+        }
+    }
+}
 
 int main() {
     Estado inicial;
@@ -425,6 +481,12 @@ int main() {
             }
         }
     }
+
+    determinizar();
+    removerInalcancaveis();
+    removerMortos();
+    adicionarEstadoErro();
+    imprimirAFD();
 
     return 0;
 }
