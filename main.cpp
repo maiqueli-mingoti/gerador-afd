@@ -199,6 +199,12 @@ string gerarNomeAFD(int num) {
 void lerArquivo() {
     ifstream arquivo("entrada.txt");
 
+    // se n abriu avisa
+    if (!arquivo) {
+        cout << "nao foi possivel abrir o arquivo entrada.txt\n";
+        exit(1);
+    }
+
     string linha;
     bool lendoGR = false;
     int numGR = 0;
