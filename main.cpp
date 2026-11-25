@@ -180,6 +180,65 @@ string gerarNomeAFD(int num) {
     return nome;
 }
 
+void lerArquivo() {
+    ifstream arquivo("entrada.txt");
+
+    string linha;
+    bool lendoGR = false;
+    int numGR = 0;
+
+    while (getline(arquivo, linha)) {
+        // tira \r e \t antes de passar para processarGramatica
+        string semLixo = "";
+        for (int i = 0; i < linha.length(); i++) {
+            if (linha[i] != '\r' && linha[i] != '\t') {
+                semLixo += linha[i];
+            }
+        }
+
+        // tira espacos tambem pra checar se a linha esta vazia ou se eh token
+        string semEspaco = "";
+        for (int i = 0; i < semLixo.length(); i++) {
+            if (semLixo[i] != ' ') {
+                semEspaco += semLixo[i];
+            }
+        }
+
+        // linha vazia separa uma gramatica da outra
+        if (semEspaco == "") {
+            mapaGR.clear();
+            lendoGR = false;
+            continue;
+        }
+
+        int pos = semEspaco.find("::=");
+        if (pos != -1) {
+            string origem = semEspaco.substr(0, pos);
+
+            // se comecou uma nova GR, limpa o mapaGR pra nao misturar estados
+            if (!lendoGR || origem == "<S>") {
+                mapaGR.clear();
+                numGR++;
+                lendoGR = true;
+            }
+            processarGramatica(semLixo);
+
+            // da um nome de token pros estados finais vindos da gramatica
+            for (int i = 0; i < afnd.size(); i++) {
+                if (afnd[i].final && afnd[i].tokens.size() == 0) {
+                    afnd[i].tokens.insert("GR" + to_string(numGR));
+                }
+            }
+        } else {
+            mapaGR.clear();
+            lendoGR = false;
+            adicionarToken(semEspaco);
+        }
+    }
+
+    arquivo.close();
+}
+
 
 
 int main() {
