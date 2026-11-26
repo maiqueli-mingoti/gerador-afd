@@ -5,7 +5,7 @@ struct Estado {
     string nome; // nome do estado na tabela tipo s ou a
     bool final = false; // se eh final equivale ao * da tabel
     set<string> tokens; // qual palavra reconhece no final
-    map<char, set<int>> transicoes; // setas q saem do estado
+    map<char, set<int> > transicoes; // setas q saem do estado
 };
 
 vector<Estado> afnd; // lista de estados e a posicao 0 eh o estado inicial
@@ -51,7 +51,8 @@ int novoEstado() {
 }
 
 void criaSeta(int origem, char letra, int destino) {
-    if (alfabeto.find(letra) == string:: npos) { // procura a letra se n cria nova
+    if (alfabeto.find(letra) == string::npos) {
+        // procura a letra se n cria nova
         alfabeto = alfabeto + letra;
     }
     afnd[origem].transicoes[letra].insert(destino);
@@ -59,7 +60,7 @@ void criaSeta(int origem, char letra, int destino) {
 
 void adicionarToken(string token) {
     int atual = 0;
-    for (char letra : token) {
+    for (char letra: token) {
         int novo = novoEstado();
         criaSeta(atual, letra, novo);
         atual = novo;
@@ -102,9 +103,10 @@ bool ehEpsilon(string pedaco) {
 
     return false;
 }
+
 // funcao pra processar a gramatica
 void processarGramatica(string linha) {
-    // tira todos os espacos 
+    // tira todos os espacos
     string linhaLimpa = "";
     for (int i = 0; i < linha.length(); i++) {
         if (linha[i] != ' ') {
@@ -123,23 +125,26 @@ void processarGramatica(string linha) {
     string pedaco = "";
     for (int i = 0; i < regras.length(); i++) {
         if (regras[i] == '|') {
-            // achou o pipe, entao o "pedaco" ta pronto pra virar seta
-            if (ehEpsilon(pedaco)) {
-                int idOrigem = pegarEstadoGR(origem);
-                afnd[idOrigem].final = true;
-            } else {
-                int idOrigem = pegarEstadoGR(origem);
-                char letra = pedaco[0]; // a primeira coisa eh a letra
-                string nomeDestino = pedaco.substr(1); // o resto 
-                
-                int idDestino;
-                if (nomeDestino == "") { // se a regra for so uma letra tipo "a"
-                    idDestino = novoEstado();
-                    afnd[idDestino].final = true;
+            // pedaco vazio aparece qnd tem || ou | logo depois do sinal e eh ignorado
+            if (pedaco != "") {
+                if (ehEpsilon(pedaco)) {
+                    int idOrigem = pegarEstadoGR(origem);
+                    afnd[idOrigem].final = true;
                 } else {
-                    idDestino = pegarEstadoGR(nomeDestino);
+                    int idOrigem = pegarEstadoGR(origem);
+                    char letra = pedaco[0]; // a primeira coisa eh a letra
+                    string nomeDestino = pedaco.substr(1); // o resto
+
+                    int idDestino;
+                    if (nomeDestino == "") {
+                        // se a regra for so uma letra tipo "a"
+                        idDestino = novoEstado();
+                        afnd[idDestino].final = true;
+                    } else {
+                        idDestino = pegarEstadoGR(nomeDestino);
+                    }
+                    criaSeta(idOrigem, letra, idDestino);
                 }
-                criaSeta(idOrigem, letra, idDestino);
             }
             pedaco = ""; // zera o pedaco pra ler o proximo
         } else {
@@ -156,7 +161,7 @@ void processarGramatica(string linha) {
             int idOrigem = pegarEstadoGR(origem);
             char letra = pedaco[0];
             string nomeDestino = pedaco.substr(1);
-            
+
             int idDestino;
             if (nomeDestino == "") {
                 idDestino = novoEstado();
@@ -219,9 +224,9 @@ void processarBlocoGR(vector<string> linhas) {
     if (inicialReferenciado) {
         int proprio = mapaGR[simboloInicial];
 
-        for (char letra : alfabeto) {
+        for (char letra: alfabeto) {
             if (afnd[proprio].transicoes.count(letra) > 0) {
-                for (int destino : afnd[proprio].transicoes[letra]) {
+                for (int destino: afnd[proprio].transicoes[letra]) {
                     criaSeta(0, letra, destino);
                 }
             }
@@ -288,9 +293,10 @@ void lerArquivo() {
 
     arquivo.close();
 }
+
 void determinizar() {
     // guarda o conjunto de estados do AFND que forma cada estado do AFD
-    vector<set<int>> conjuntos;
+    vector<set<int> > conjuntos;
 
     // comeca com o conjunto {0} S
     set<int> inicial;
@@ -307,13 +313,13 @@ void determinizar() {
 
     // conforme novos conjuntos entram no vector o for continua ate acabar
     for (int i = 0; i < conjuntos.size(); i++) {
-        for (char letra : alfabeto) {
+        for (char letra: alfabeto) {
             set<int> destino;
 
             // junta todos os destinos possiveis para essa letra
-            for (int idAFND : conjuntos[i]) {
+            for (int idAFND: conjuntos[i]) {
                 if (afnd[idAFND].transicoes.count(letra) > 0) {
-                    for (int d : afnd[idAFND].transicoes[letra]) {
+                    for (int d: afnd[idAFND].transicoes[letra]) {
                         destino.insert(d);
                     }
                 }
@@ -337,10 +343,10 @@ void determinizar() {
                     EstadoAFD novo;
                     novo.nome = gerarNomeAFD(idDestino);
 
-                    for (int idAFND : destino) {
+                    for (int idAFND: destino) {
                         if (afnd[idAFND].final) {
                             novo.final = true;
-                            for (string tok : afnd[idAFND].tokens) {
+                            for (string tok: afnd[idAFND].tokens) {
                                 novo.tokens.insert(tok);
                             }
                         }
@@ -377,7 +383,7 @@ void reconstruirAFD(vector<bool> manter) {
         if (novoIndice[i] == -1) continue;
 
         int origemNova = novoIndice[i];
-        for (char letra : alfabeto) {
+        for (char letra: alfabeto) {
             if (afd[i].transicoes.count(letra) > 0) {
                 int destAntigo = afd[i].transicoes[letra];
                 if (novoIndice[destAntigo] != -1) {
@@ -401,7 +407,7 @@ void removerInalcancaveis() {
         mudou = false;
         for (int i = 0; i < afd.size(); i++) {
             if (alcancavel[i]) {
-                for (char letra : alfabeto) {
+                for (char letra: alfabeto) {
                     if (afd[i].transicoes.count(letra) > 0) {
                         int dest = afd[i].transicoes[letra];
                         if (!alcancavel[dest]) {
@@ -435,7 +441,7 @@ void removerMortos() {
         mudou = false;
         for (int i = 0; i < afd.size(); i++) {
             if (!vivo[i]) {
-                for (char letra : alfabeto) {
+                for (char letra: alfabeto) {
                     if (afd[i].transicoes.count(letra) > 0) {
                         int dest = afd[i].transicoes[letra];
                         if (vivo[dest]) {
@@ -455,15 +461,15 @@ void removerMortos() {
 void adicionarEstadoErro() {
     EstadoAFD erro;
     erro.nome = "_"; // estado de erro
-    erro.final = true; // ultimo estado final 
+    erro.final = true; // ultimo estado final
     erro.tokens.insert("ERRO");
 
     afd.push_back(erro);
     int idErro = afd.size() - 1;
 
-    // preenche todas as celulas vazias 
+    // preenche todas as celulas vazias
     for (int i = 0; i < afd.size(); i++) {
-        for (char letra : alfabeto) {
+        for (char letra: alfabeto) {
             if (afd[i].transicoes.count(letra) == 0) {
                 afd[i].transicoes[letra] = idErro;
             }
@@ -475,7 +481,7 @@ void imprimirAFD() {
     cout << "\ntabela do AFD final:\n\n";
 
     cout << "estado\t";
-    for (char letra : alfabeto) {
+    for (char letra: alfabeto) {
         cout << letra << "\t";
     }
     cout << "\n";
@@ -486,7 +492,7 @@ void imprimirAFD() {
         }
         cout << afd[i].nome << "\t";
 
-        for (char letra : alfabeto) {
+        for (char letra: alfabeto) {
             if (afd[i].transicoes.count(letra) > 0) {
                 int dest = afd[i].transicoes[letra];
                 cout << afd[dest].nome << "\t";
@@ -501,7 +507,7 @@ void imprimirAFD() {
     for (int i = 0; i < afd.size(); i++) {
         if (afd[i].final) {
             cout << afd[i].nome << ": ";
-            for (string tok : afd[i].tokens) {
+            for (string tok: afd[i].tokens) {
                 cout << tok << " ";
             }
             cout << "\n";
@@ -516,16 +522,16 @@ int main() {
 
     lerArquivo();
     cout << "alfabeto: " << alfabeto << "\n";
-    for (Estado e : afnd) {
-        for (char letra : alfabeto) {
+    for (Estado e: afnd) {
+        for (char letra: alfabeto) {
             if (e.transicoes.count(letra) > 0) {
-                for (int destino : e.transicoes[letra]) {
+                for (int destino: e.transicoes[letra]) {
                     cout << e.nome << " --" << letra << "--> " << afnd[destino].nome << "\n";
                 }
             }
         }
         if (e.final) {
-            for (string token : e.tokens) {
+            for (string token: e.tokens) {
                 cout << e.nome << " eh final e reconhece " << token << "\n";
             }
         }
