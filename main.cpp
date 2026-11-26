@@ -183,6 +183,7 @@ struct EstadoAFD {
     string nome;
     bool final = false;
     set<string> tokens;
+    string conjunto; // estados tipo [A,H]
     map<char, int> transicoes;
 };
 
@@ -297,25 +298,33 @@ void lerArquivo() {
 
     arquivo.close();
 }
+// forma um estado tipo [A,H]
+string textoConjunto(set<int> conjunto) {
+    string texto = "[";
+    for (int idAFND : conjunto) {
+        if (texto != "[") {
+            texto = texto + ",";
+        }
+        texto = texto + afnd[idAFND].nome;
+    }
+    texto = texto + "]";
+    return texto;
+}
 
 void determinizar() {
-    // guarda o conjunto de estados do afnd q forma cada estado do afd
     vector<set<int> > conjuntos;
-
-    // comeca com o conjunto q so tem o estado 0 q eh o s
     set<int> inicial;
     inicial.insert(0);
     conjuntos.push_back(inicial);
 
     EstadoAFD eInicial;
     eInicial.nome = gerarNomeAFD(0);
+    eInicial.conjunto = textoConjunto(inicial);
     if (afnd[0].final) {
         eInicial.final = true;
         eInicial.tokens = afnd[0].tokens;
     }
     afd.push_back(eInicial);
-
-    // conforme novos conjuntos entram no vector o for continua ate acabar
     for (int i = 0; i < conjuntos.size(); i++) {
         for (char letra: alfabeto) {
             set<int> destino;
@@ -346,6 +355,7 @@ void determinizar() {
 
                     EstadoAFD novo;
                     novo.nome = gerarNomeAFD(idDestino);
+                    novo.conjunto = textoConjunto(destino);
 
                     for (int idAFND: destino) {
                         if (afnd[idAFND].final) {
@@ -377,6 +387,7 @@ void reconstruirAFD(vector<bool> manter) {
             EstadoAFD copia;
             copia.nome = gerarNomeAFD(novoIndice[i]);
             copia.final = afd[i].final;
+            copia.conjunto = afd[i].conjunto;
             copia.tokens = afd[i].tokens;
             novoAFD.push_back(copia);
         }
@@ -488,29 +499,129 @@ void adicionarEstadoErro() {
         }
     }
 }
+// comeco da linha com seta no inicial e asterisco nos finais igual a apostila
+string rotuloLinha(int posicao, bool ehFinal, string nome) {
+    string rotulo = "";
+    if (posicao == 0) {
+        rotulo = rotulo + "->";
+    }
+    if (ehFinal) {
+        rotulo = rotulo + "*";
+    }
+    rotulo = rotulo + nome;
+    return rotulo;
+}
+
+// celula do afnd com os destinos separados por virgula ou traco se n tiver seta
+string celulaAFND(Estado e, char letra) {
+    if (e.transicoes.count(letra) == 0) {
+        return "-";
+    }
+    string texto = "";
+    for (int destino : e.transicoes[letra]) {
+        if (texto != "") {
+            texto = texto + ", ";
+        }
+        texto = texto + afnd[destino].nome;
+    }
+    return texto;
+}
+
+void imprimirAFND() {
+    int larguraRotulo = 5;
+    int larguraCelula = 1;
+    for (int i = 0; i < afnd.size(); i++) {
+        string rotulo = rotuloLinha(i, afnd[i].final, afnd[i].nome);
+        int tamanho = rotulo.size();
+        if (tamanho > larguraRotulo) {
+            larguraRotulo = tamanho;
+        }
+        for (char letra : alfabeto) {
+            string celula = celulaAFND(afnd[i], letra);
+            tamanho = celula.size();
+            if (tamanho > larguraCelula) {
+                larguraCelula = tamanho;
+            }
+        }
+    }
+    larguraRotulo = larguraRotulo + 2;
+    larguraCelula = larguraCelula + 2;
+
+    cout << "\ntabela do AFND:\n\n";
+    cout << left << setw(larguraRotulo) << "delta";
+    for (char letra : alfabeto) {
+        cout << setw(larguraCelula) << letra;
+    }
+    cout << "\n";
+    for (int i = 0; i < afnd.size(); i++) {
+        cout << setw(larguraRotulo) << rotuloLinha(i, afnd[i].final, afnd[i].nome);
+        for (char letra : alfabeto) {
+            cout << setw(larguraCelula) << celulaAFND(afnd[i], letra);
+        }
+        cout << "\n";
+    }
+
+    // lista o q cada estado final reconhece
+    cout << "\nestados finais do AFND:\n";
+    for (int i = 0; i < afnd.size(); i++) {
+        if (afnd[i].final) {
+            cout << afnd[i].nome << ": ";
+            for (string token : afnd[i].tokens) {
+                cout << token << " ";
+            }
+            cout << "\n";
+        }
+    }
+}
+//  tipo A [A,H]
+string rotuloAFD(int posicao) {
+    string rotulo = rotuloLinha(posicao, afd[posicao].final, afd[posicao].nome);
+    if (afd[posicao].conjunto != "") {
+        rotulo = rotulo + " " + afd[posicao].conjunto;
+    }
+    return rotulo;
+}
+string celulaAFD(EstadoAFD e, char letra) {
+    if (e.transicoes.count(letra) == 0) {
+        return "-";
+    }
+    int destino = e.transicoes[letra];
+    return afd[destino].nome;
+}
 
 void imprimirAFD() {
+    // so pra alinhar a tabel
+    int larguraRotulo = 5;
+    int larguraCelula = 1;
+    for (int i = 0; i < afd.size(); i++) {
+        string rotulo = rotuloAFD(i);
+        int tamanho = rotulo.size();
+        if (tamanho > larguraRotulo) {
+            larguraRotulo = tamanho;
+        }
+        for (char letra : alfabeto) {
+            string celula = celulaAFD(afd[i], letra);
+            tamanho = celula.size();
+            if (tamanho > larguraCelula) {
+                larguraCelula = tamanho;
+            }
+        }
+    }
+    larguraRotulo = larguraRotulo + 2;
+    larguraCelula = larguraCelula + 2;
+
     cout << "\ntabela do AFD final:\n\n";
 
-    cout << "estado\t";
-    for (char letra: alfabeto) {
-        cout << letra << "\t";
+    cout << left << setw(larguraRotulo) << "delta";
+    for (char letra : alfabeto) {
+        cout << setw(larguraCelula) << letra;
     }
     cout << "\n";
 
     for (int i = 0; i < afd.size(); i++) {
-        if (afd[i].final) {
-            cout << "*";
-        }
-        cout << afd[i].nome << "\t";
-
-        for (char letra: alfabeto) {
-            if (afd[i].transicoes.count(letra) > 0) {
-                int dest = afd[i].transicoes[letra];
-                cout << afd[dest].nome << "\t";
-            } else {
-                cout << "-\t";
-            }
+        cout << setw(larguraRotulo) << rotuloAFD(i);
+        for (char letra : alfabeto) {
+            cout << setw(larguraCelula) << celulaAFD(afd[i], letra);
         }
         cout << "\n";
     }
@@ -519,7 +630,7 @@ void imprimirAFD() {
     for (int i = 0; i < afd.size(); i++) {
         if (afd[i].final) {
             cout << afd[i].nome << ": ";
-            for (string tok: afd[i].tokens) {
+            for (string tok : afd[i].tokens) {
                 cout << tok << " ";
             }
             cout << "\n";
@@ -533,21 +644,8 @@ int main() {
     afnd.push_back(inicial);
 
     lerArquivo();
-    cout << "alfabeto: " << alfabeto << "\n";
-    for (Estado e: afnd) {
-        for (char letra: alfabeto) {
-            if (e.transicoes.count(letra) > 0) {
-                for (int destino: e.transicoes[letra]) {
-                    cout << e.nome << " --" << letra << "--> " << afnd[destino].nome << "\n";
-                }
-            }
-        }
-        if (e.final) {
-            for (string token: e.tokens) {
-                cout << e.nome << " eh final e reconhece " << token << "\n";
-            }
-        }
-    }
+
+    imprimirAFND();
 
     determinizar();
     removerInalcancaveis();
