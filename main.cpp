@@ -259,8 +259,15 @@ void lerArquivo() {
     }
 
     string linha;
+    bool primeiraLinha = true;
     vector<string> blocoGR;
     while (getline(arquivo, linha)) {
+        if (primeiraLinha) {
+            if (linha.size() >= 3 && linha.substr(0, 3) == "\xEF\xBB\xBF") {
+                linha = linha.substr(3);
+            }
+            primeiraLinha = false;
+        }
         string semLixo = "";
         for (int i = 0; i < linha.length(); i++) {
             if (linha[i] != '\r' && linha[i] != '\t') {
@@ -276,10 +283,6 @@ void lerArquivo() {
 
         int pos = semEspaco.find("::=");
         if (pos != -1) {
-            string origem = semEspaco.substr(0, pos);
-            if ((origem == "<S>" || origem == "S") && blocoGR.size() > 0) {                processarBlocoGR(blocoGR);
-                blocoGR.clear();
-            }
             blocoGR.push_back(semEspaco);
         } else {
             if (blocoGR.size() > 0) {
