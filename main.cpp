@@ -2,40 +2,40 @@
 using namespace std;
 
 struct Estado {
-    string nome; // nome do estado na tabela tipo s ou a
-    bool final = false; // se eh final aparece com asterisco na tabela
-    set<string> tokens; // tokens q esse estado reconhece qnd eh final tipo se ou gr1
-    map<char, set<int> > transicoes; // setas q saem do estado
+    string nome;
+    bool final = false;
+    set<string> tokens;
+    map<char, set<int> > transicoes;
 };
 
-vector<Estado> afnd; // lista de estados e a posicao 0 eh o estado inicial
-string alfabeto; // letras usadas q vao virar as colunas da tabela
-int contador = 0; // qnts nomes ja foram criados
+vector<Estado> afnd;
+string alfabeto;
+int contador = 0;
 
 string novoNome() {
-    // soma 1 pq vamos criar mais um nome
+
     contador++;
 
-    // s eh a letra 19 e esse nome eh do estado inicial entao pula p o t
+
     if (contador == 19) {
         contador++;
     }
 
-    // nome comeca vazio e as letras entram no while
+
     string nome = "";
 
-    // copia do contador pq o i muda no while e o contador n pode mudar
+
     int i = contador;
 
     while (i > 0) {
-        // posicao da letra de a ate z onde 0 eh a e 25 eh z
+
         int resto = (i - 1) % 26;
 
         char letra = 'A' + resto;
 
         nome = letra + nome;
 
-        // se n faltar letra o i vira 0 e o while para
+
         i = (i - 1) / 26;
     }
 
@@ -46,13 +46,13 @@ int novoEstado() {
     Estado e;
     e.nome = novoNome();
     afnd.push_back(e);
-    int posicao = afnd.size() - 1; // o estado novo entrou no fim entao a posicao dele eh o tamanho menos 1
+    int posicao = afnd.size() - 1;
     return posicao;
 }
 
 void criaSeta(int origem, char letra, int destino) {
     if (alfabeto.find(letra) == string::npos) {
-        // se a letra ainda n ta no alfabeto coloca ela no fim
+
         alfabeto = alfabeto + letra;
     }
     afnd[origem].transicoes[letra].insert(destino);
@@ -72,12 +72,12 @@ void adicionarToken(string token) {
 
 map<string, int> mapaGR;
 
-string simboloInicial = "<S>"; // simbolo inicial da gramatica atual q muda a cada bloco
+string simboloInicial = "<S>";
 bool inicialReferenciado = false;
 int contadorGR = 0;
 
-// devolve o estado do afnd de um nao terminal e cria um novo se ainda n existir
-// o inicial usa o estado 0 direto qnd nenhuma regra aponta p ele
+
+
 int pegarEstadoGR(string nomeGR) {
     if (nomeGR == simboloInicial && !inicialReferenciado) {
         return 0;
@@ -88,7 +88,7 @@ int pegarEstadoGR(string nomeGR) {
     return mapaGR[nomeGR];
 }
 
-// ve se o pedaco eh o vazio escrito de um dos jeitos aceitos
+
 bool ehEpsilon(string pedaco) {
     if (pedaco == "ε") {
         return true;
@@ -106,9 +106,9 @@ bool ehEpsilon(string pedaco) {
 }
 
 
-// processa uma linha da gramatica e cria as setas dela no afnd
+
 void processarGramatica(string linha) {
-    // tira todos os espacos
+
     string linhaLimpa = "";
     for (int i = 0; i < linha.length(); i++) {
         if (linha[i] != ' ') {
@@ -116,32 +116,32 @@ void processarGramatica(string linha) {
         }
     }
 
-    // acha onde ta o sinal de definicao e separa os lados
+
     int pos = linhaLimpa.find("::=");
-    // se n achou o sinal a linha n eh regra entao ignora
+
     if (pos == -1) {
         return;
     }
-    string origem = linhaLimpa.substr(0, pos); // lado esquerdo eh o nao terminal
-    string regras = linhaLimpa.substr(pos + 3); // lado direito sao as alternativas
+    string origem = linhaLimpa.substr(0, pos);
+    string regras = linhaLimpa.substr(pos + 3);
 
-    // le caractere por caractere e separa as alternativas em cada barra
+
     string pedaco = "";
     for (int i = 0; i < regras.length(); i++) {
         if (regras[i] == '|') {
-            // pedaco vazio aparece qnd tem duas barras seguidas ou barra logo depois do sinal e eh ignorado
+
             if (pedaco != "") {
                 if (ehEpsilon(pedaco)) {
                     int idOrigem = pegarEstadoGR(origem);
                     afnd[idOrigem].final = true;
                 } else {
                     int idOrigem = pegarEstadoGR(origem);
-                    char letra = pedaco[0]; // o primeiro caractere eh o terminal
-                    string nomeDestino = pedaco.substr(1); // o resto eh o nome do nao terminal de destino
+                    char letra = pedaco[0];
+                    string nomeDestino = pedaco.substr(1);
 
                     int idDestino;
                     if (nomeDestino == "") {
-                        // regra so com terminal tipo a cria um estado final novo
+
                         idDestino = novoEstado();
                         afnd[idDestino].final = true;
                     } else {
@@ -150,13 +150,13 @@ void processarGramatica(string linha) {
                     criaSeta(idOrigem, letra, idDestino);
                 }
             }
-            pedaco = ""; // zera o pedaco p ler o proximo
+            pedaco = "";
         } else {
-            pedaco += regras[i]; // vai juntando as letras
+            pedaco += regras[i];
         }
     }
 
-    // trata o ultimo pedaco q sobrou depois da ultima barra
+
     if (pedaco != "") {
         if (ehEpsilon(pedaco)) {
             int idOrigem = pegarEstadoGR(origem);
@@ -178,18 +178,18 @@ void processarGramatica(string linha) {
     }
 }
 
-// estado do afd onde cada letra leva p um so estado
+
 struct EstadoAFD {
     string nome;
     bool final = false;
     set<string> tokens;
-    string conjunto; // estados tipo [A,H]
+    string conjunto;
     map<char, int> transicoes;
 };
 
 vector<EstadoAFD> afd;
 
-// gera o nome do estado do afd pela posicao dele
+
 string gerarNomeAFD(int num) {
     if (num == 0) {
         return "S";
@@ -209,7 +209,7 @@ string gerarNomeAFD(int num) {
     return nome;
 }
 
-// processa uma gramatica inteira de uma vez
+
 void processarBlocoGR(vector<string> linhas) {
     mapaGR.clear();
     contadorGR++;
@@ -237,7 +237,7 @@ void processarBlocoGR(vector<string> linhas) {
             }
         }
 
-        // se o inicial eh final o s tb fica final
+
         if (afnd[proprio].final) {
             afnd[0].final = true;
         }
@@ -252,7 +252,7 @@ void processarBlocoGR(vector<string> linhas) {
 void lerArquivo() {
     ifstream arquivo("entrada.txt");
 
-    // se n abriu avisa e fecha o programa
+
     if (!arquivo) {
         cout << "nao foi possivel abrir o arquivo entrada.txt\n";
         exit(1);
@@ -300,7 +300,7 @@ void lerArquivo() {
 
     arquivo.close();
 }
-// forma um estado tipo [A,H]
+
 string textoConjunto(set<int> conjunto) {
     string texto = "[";
     for (int idAFND : conjunto) {
@@ -331,7 +331,7 @@ void determinizar() {
         for (char letra: alfabeto) {
             set<int> destino;
 
-            // junta todos os destinos possiveis p essa letra
+
             for (int idAFND: conjuntos[i]) {
                 if (afnd[idAFND].transicoes.count(letra) > 0) {
                     for (int d: afnd[idAFND].transicoes[letra]) {
@@ -341,7 +341,7 @@ void determinizar() {
             }
 
             if (destino.size() > 0) {
-                // verifica se esse conjunto ja foi criado antes
+
                 int idDestino = -1;
                 for (int j = 0; j < conjuntos.size(); j++) {
                     if (conjuntos[j] == destino) {
@@ -350,7 +350,7 @@ void determinizar() {
                     }
                 }
 
-                // se for conjunto novo cria um estado novo no afd
+
                 if (idDestino == -1) {
                     idDestino = conjuntos.size();
                     conjuntos.push_back(destino);
@@ -377,12 +377,12 @@ void determinizar() {
     }
 }
 
-// deixa no afd so os estados marcados em manter e refaz os nomes deles
+
 void reconstruirAFD(vector<bool> manter) {
     vector<int> novoIndice(afd.size(), -1);
     vector<EstadoAFD> novoAFD;
 
-    // copia os estados q ficam e anota a nova posicao de cada um
+
     for (int i = 0; i < afd.size(); i++) {
         if (manter[i]) {
             novoIndice[i] = novoAFD.size();
@@ -395,9 +395,9 @@ void reconstruirAFD(vector<bool> manter) {
         }
     }
 
-    // refaz as transicoes apontando p as novas posicoes
+
     for (int i = 0; i < afd.size(); i++) {
-        // estado removido n tem setas p refazer
+
         if (novoIndice[i] == -1) {
             continue;
         }
@@ -417,12 +417,12 @@ void reconstruirAFD(vector<bool> manter) {
 }
 
 void removerInalcancaveis() {
-    // seguranca caso o afd venha vazio
+
     if (afd.size() == 0) {
         return;
     }
     vector<bool> alcancavel(afd.size(), false);
-    alcancavel[0] = true; // o estado inicial s sempre eh alcancavel
+    alcancavel[0] = true;
 
     bool mudou = true;
     while (mudou) {
@@ -446,21 +446,21 @@ void removerInalcancaveis() {
 }
 
 void removerMortos() {
-    // seguranca caso o afd venha vazio
+
     if (afd.size() == 0) {
         return;
     }
 
     vector<bool> vivo(afd.size(), false);
 
-    // todo estado final ja eh vivo
+
     for (int i = 0; i < afd.size(); i++) {
         if (afd[i].final) {
             vivo[i] = true;
         }
     }
 
-    // se um estado leva p um estado vivo ele tb eh vivo
+
     bool mudou = true;
     while (mudou) {
         mudou = false;
@@ -479,20 +479,20 @@ void removerMortos() {
         }
     }
 
-    vivo[0] = true; // o s fica mesmo se for morto pq a tabela sempre comeca nele
+    vivo[0] = true;
     reconstruirAFD(vivo);
 }
 
 void adicionarEstadoErro() {
     EstadoAFD erro;
-    erro.nome = "_"; // nome do estado de erro na tabela
-    erro.final = true; // final como pede a apostila pq reporta erro
+    erro.nome = "_";
+    erro.final = true;
     erro.tokens.insert("ERRO");
 
     afd.push_back(erro);
     int idErro = afd.size() - 1;
 
-    // toda celula vazia vai p o erro inclusive as do proprio erro
+
     for (int i = 0; i < afd.size(); i++) {
         for (char letra: alfabeto) {
             if (afd[i].transicoes.count(letra) == 0) {
@@ -501,7 +501,7 @@ void adicionarEstadoErro() {
         }
     }
 }
-// comeco da linha com seta no inicial e asterisco nos finais igual a apostila
+
 string rotuloLinha(int posicao, bool ehFinal, string nome) {
     string rotulo = "";
     if (posicao == 0) {
@@ -514,7 +514,7 @@ string rotuloLinha(int posicao, bool ehFinal, string nome) {
     return rotulo;
 }
 
-// celula do afnd com os destinos separados por virgula ou traco se n tiver seta
+
 string celulaAFND(Estado e, char letra) {
     if (e.transicoes.count(letra) == 0) {
         return "-";
@@ -563,7 +563,7 @@ void imprimirAFND() {
         cout << "\n";
     }
 
-    // lista o q cada estado final reconhece
+
     cout << "\nestados finais do AFND:\n";
     for (int i = 0; i < afnd.size(); i++) {
         if (afnd[i].final) {
@@ -575,7 +575,7 @@ void imprimirAFND() {
         }
     }
 }
-//  tipo A [A,H]
+
 string rotuloAFD(int posicao) {
     string rotulo = rotuloLinha(posicao, afd[posicao].final, afd[posicao].nome);
     if (afd[posicao].conjunto != "") {
@@ -592,7 +592,7 @@ string celulaAFD(EstadoAFD e, char letra) {
 }
 
 void imprimirAFD() {
-    // so pra alinhar a tabel
+
     int larguraRotulo = 5;
     int larguraCelula = 1;
     for (int i = 0; i < afd.size(); i++) {
