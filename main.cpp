@@ -472,9 +472,9 @@ void adicionarEstadoErro() {
 }
 
 void imprimirAFD() {
-    cout << "\nTabela do AFD final:\n\n";
+    cout << "\ntabela do AFD final:\n\n";
 
-    cout << "Estado\t";
+    cout << "estado\t";
     for (char letra : alfabeto) {
         cout << letra << "\t";
     }
@@ -497,7 +497,7 @@ void imprimirAFD() {
         cout << "\n";
     }
 
-    cout << "\nEstados finais do AFD:\n";
+    cout << "\nestados finais do AFD:\n";
     for (int i = 0; i < afd.size(); i++) {
         if (afd[i].final) {
             cout << afd[i].nome << ": ";
