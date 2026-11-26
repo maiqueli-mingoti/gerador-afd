@@ -116,8 +116,10 @@ void processarGramatica(string linha) {
 
     // acha onde ta o "::=" e separa os lados
     int pos = linhaLimpa.find("::=");
-    if (pos == -1) return; // se nao achou, ignora a linha
-
+    // se n achou o sinal a linha n eh regra entao ignora
+    if (pos == -1) {
+        return;
+    }
     string origem = linhaLimpa.substr(0, pos); // pega tudo antes do ::=
     string regras = linhaLimpa.substr(pos + 3); // pega tudo depois do ::=
 
@@ -380,7 +382,10 @@ void reconstruirAFD(vector<bool> manter) {
 
     // refaz as transicoes apontando para as novas posicoes
     for (int i = 0; i < afd.size(); i++) {
-        if (novoIndice[i] == -1) continue;
+        // estado removido n tem setas p refazer
+        if (novoIndice[i] == -1) {
+            continue;
+        }
 
         int origemNova = novoIndice[i];
         for (char letra: alfabeto) {
@@ -397,8 +402,10 @@ void reconstruirAFD(vector<bool> manter) {
 }
 
 void removerInalcancaveis() {
-    if (afd.size() == 0) return;
-
+    //caso o afd venha vazio
+    if (afd.size() == 0) {
+        return;
+    }
     vector<bool> alcancavel(afd.size(), false);
     alcancavel[0] = true; // o estado inicial S sempre eh alcancavel
 
