@@ -277,8 +277,7 @@ void lerArquivo() {
         int pos = semEspaco.find("::=");
         if (pos != -1) {
             string origem = semEspaco.substr(0, pos);
-            if (origem == "<S>" && blocoGR.size() > 0) {
-                processarBlocoGR(blocoGR);
+            if ((origem == "<S>" || origem == "S") && blocoGR.size() > 0) {                processarBlocoGR(blocoGR);
                 blocoGR.clear();
             }
             blocoGR.push_back(semEspaco);
